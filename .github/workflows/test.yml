@@ -4,7 +4,5 @@ on:
   workflow_call:
 
 jobs:
-  placeholder:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "This is a placeholder job to prevent a warning from GitHub Actions."
+  build:
+    uses: ./.github/workflows/build.yml
