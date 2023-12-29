@@ -18,7 +18,7 @@ jobs:
         id: get_version_id
         run: |
           VERSIONS=$(gh api users/harm-matthias-harms/packages/container/postgres-wal-g/versions)
-          echo VERSIONS
+          echo ${VERSIONS}
           VERSION_ID=$(echo $VERSIONS | jq -r '.[] | select(.metadata.container.tags[0] == ${{ steps.meta.outputs.tags }}) | .id')
           echo "::set-output name=version_id::$VERSION_ID"
         env:
