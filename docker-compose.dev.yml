@@ -1,0 +1,35 @@
+version: '3'
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    platform: linux/amd64
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    environment:
+      AWS_ENDPOINT: http://minio:9000
+      # AWS_ACCESS_KEY_ID: SET YOUR S3 ACCESS KEY
+      # AWS_SECRET_ACCESS_KEY: SET YOUR S3 SECRET KEY
+      AWS_S3_FORCE_PATH_STYLE: true
+      WALG_S3_PREFIX: s3://database
+      # WALG_LIBSODIUM_KEY: SET YOUR LIBSODIUM KEY
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # RECOVERY: true
+    depends_on:
+      - minio
+  minio:
+    image: minio/minio:latest
+    command: minio server /data
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./data/minio:/data
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
