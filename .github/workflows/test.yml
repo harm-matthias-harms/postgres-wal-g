@@ -20,6 +20,10 @@ jobs:
           VERSIONS=$(gh api repos/harm-matthias-harms/postgres-wal-g/packages/container/versions)
           VERSION_ID=$(echo $VERSIONS | jq -r '.[] | select(.metadata.container.tags[0] == ${{ steps.meta.outputs.tags }}) | .id')
           echo "::set-output name=version_id::$VERSION_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Delete version
         run: |
           gh api repos/harm-matthias-harms/postgres-wal-g/packages/container/versions/${{ steps.get_version_id.outputs.version_id }} -X DELETE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
