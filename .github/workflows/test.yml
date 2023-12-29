@@ -6,9 +6,55 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yml
-  cleanup:
+  test-backup:
     runs-on: ubuntu-latest
     needs: build
+    services:
+      minio:
+        image: minio/minio:latest
+        options: --name minio --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
+        ports:
+          - "9000:9000"
+        env:
+          MINIO_ACCESS_KEY: minio
+          MINIO_SECRET_KEY: minio123
+    env:
+      MC_HOST_minio: http://minio:minio123@localhost:9000
+      LIBSODIUM_KEY: 1234567890123456789012345678901234567890123456789012345678901234
+    steps:
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/harm-matthias-harms/postgres-wal-g
+      - run: docker run minio/mc mb database
+      - run: docker run minio/mc admin user add database SomeAccessKey SomeSecretKey
+      - name: Start database
+        run: docker run \
+            -d --rm \
+            --name postgres \
+            -e AWS_ENDPOINT="http://localhost:9000" \
+            -e AWS_ACCESS_KEY_ID="SomeAccessKey" \
+            -e AWS_SECRET_ACCESS_KEY="SomeSecretKey" \
+            -e AWS_S3_FORCE_PATH_STYLE="true" \
+            -e WALG_S3_PREFIX="s3://database" \
+            -e WALG_LIBSODIUM_KEY="${{ env.LIBSODIUM_KEY }}" \
+            -e POSTGRES_USER="postgres" \
+            -e POSTGRES_PASSWORD="postgres" \
+            ${{ steps.meta.outputs.tags }}
+      - name: Backup database
+        run: docker exec postgres /scripts/backup.sh
+      - name: Check if backup exists
+        run: |
+          output=$(docker run minio/mc ls database/basebackups)
+          if [ -z "$output" ]; then
+            echo "Backup is empty"
+            exit 1
+          fi
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs:
+      - test-backup
     steps:
       - uses: docker/metadata-action@v5
         id: meta
