@@ -7,10 +7,10 @@ if [ "$(id -u)" == "0" ] ; then
   exit 1
 fi
 
-export PG_VERSION=$(ls /usr/lib/postgresql/)
+PG_VERSION=$(ls /usr/lib/postgresql/)
 
 echo "Disabling recover mode and re enabling archive mode and connections..."
-mv $PGDATA/postgresql.conf.orig $PGDATA/postgresql.conf
+mv "$PGDATA"/postgresql.conf.orig "$PGDATA"/postgresql.conf
 
 echo "Recovery completed, restarting..."
 bash -c "sleep 3 && /usr/lib/postgresql/$PG_VERSION/bin/pg_ctl restart -D $PGDATA" &
